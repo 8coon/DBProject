@@ -2,7 +2,13 @@ require 'sinatra'
 require_relative 'db/db'
 require_relative 'migrations/create_db_schema'
 
+require_relative 'controllers/forum/forum'
+require_relative 'controllers/user/user'
 
+
+after do
+  content_type :json
+end
 
 
 def hello(name)
@@ -108,3 +114,4 @@ def lot!
   p 'Love you <3'
   create
 end
+
