@@ -15,7 +15,7 @@ def create
     CREATE TABLE IF NOT EXISTS Thread (
       id          SERIAL PRIMARY KEY,
       user_id     INT,
-      created_at  INT,
+      created_at  TIMESTAMPTZ,
       forum_id    INT,
       message     TEXT,
       slug        TEXT,
@@ -34,7 +34,7 @@ def create
       id          SERIAL PRIMARY KEY,
       thread_id   INT,
       user_id     INT,
-      created_at  INT,
+      created_at  TIMESTAMPTZ,
       is_edited   BOOLEAN,
       message     TEXT,
       parent_id   INT

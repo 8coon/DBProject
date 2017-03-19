@@ -1,5 +1,0 @@
-class Responder
-
-
-
-end
