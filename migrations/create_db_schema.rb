@@ -49,6 +49,30 @@ def create
       nickname  TEXT
     );}, []
 
+
+  query %q{
+      CREATE OR REPLACE FUNCTION coon_post_insert_check() RETURNS trigger AS
+      $func$
+        BEGIN
+          IF ((NEW.parent_id > 0) AND
+              (SELECT count(*) FROM Post AS P WHERE P.id = NEW.parent_id) > 0) THEN
+            RAISE EXCEPTION 'No parent post exists!';
+          END IF;
+          RETURN NEW;
+        END
+      $func$
+      LANGUAGE plpgsql;
+    }, []
+
+  query %q{
+      DROP TRIGGER IF EXISTS coon_post_check ON Post;
+    }, []
+
+  query %q{
+      CREATE TRIGGER coon_post_check BEFORE INSERT
+        ON Post FOR EACH ROW EXECUTE PROCEDURE coon_post_insert_check();
+    }, []
+
 end
 
 

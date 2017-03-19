@@ -5,6 +5,7 @@ require_relative 'migrations/create_db_schema'
 require_relative 'controllers/forum/forum'
 require_relative 'controllers/user/user'
 require_relative 'controllers/thread/thread'
+require_relative 'controllers/post/post'
 
 
 after do
