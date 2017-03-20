@@ -1,6 +1,7 @@
 FROM ubuntu:16.04
 
 MAINTAINER Serge Peshkoff
+ENV TZ "Europe/Moscow"
 
 
 RUN apt-get -y update

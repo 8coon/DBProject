@@ -32,14 +32,15 @@ def create
 
   query %q{
     CREATE TABLE IF NOT EXISTS Thread (
-      id          SERIAL PRIMARY KEY,
-      user_id     INT,
-      created_at  TIMESTAMPTZ,
-      forum_id    INT,
-      message     TEXT,
-      slug        TEXT,
-      title       TEXT,
-      votes       INT
+      id              SERIAL PRIMARY KEY,
+      user_id         INT,
+      created_at      TIMESTAMPTZ(3),
+      created_at_str  TEXT,
+      forum_id        INT,
+      message         TEXT,
+      slug            TEXT,
+      title           TEXT,
+      votes           INT
     );}, []
 
   query %q{
@@ -68,7 +69,8 @@ def create
       id               SERIAL PRIMARY KEY,
       thread_id        INT,
       user_id          INT,
-      created_at       TIMESTAMPTZ,
+      created_at       TIMESTAMPTZ(3),
+      created_at_str   TEXT,
       is_edited        BOOLEAN,
       message          TEXT,
       parent_id        INT,

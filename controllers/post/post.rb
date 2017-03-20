@@ -24,7 +24,8 @@ post '/api/thread/:slug_or_id/create' do
       SELECT
         $#{i+1}::INT          as thread_id,
         U.id::INT             as user_id,
-        $#{i+3}::TIMESTAMPTZ  as created_at,
+        $#{i+3}::TIMESTAMPTZ(3)  as created_at,
+        $#{i+8}::TEXT         as created_at_str,
         $#{i+6}::BOOLEAN      as is_edited,
         $#{i+4}::TEXT         as message,
         $#{i+5}::INT          as parent_id,
@@ -37,11 +38,14 @@ post '/api/thread/:slug_or_id/create' do
 
     values.concat [thread_id.to_i,
                    post_data['author'],
-                   post_data['created'] || Time.now,
+                   ForumThread.fm_time(Time.parse(
+                       post_data['created'] || ForumThread.now)),
                    post_data['message'],
                    post_data['parent'] || 0,
                    post_data['isEdited'],
-                   queries.length
+                   queries.length,
+                   ForumThread.fm_time(Time.parse(
+                       post_data['created'] || ForumThread.now))
                   ]
   end
 
@@ -58,11 +62,12 @@ post '/api/thread/:slug_or_id/create' do
       ), j AS (
         INSERT INTO Post AS P
           (thread_id, user_id, created_at, is_edited, message, parent_id,
-           path, insertion_index)
+           path, insertion_index, created_at_str)
         SELECT
           thread_id, user_id, created_at, is_edited, message, parent_id,
             (SELECT P2.path FROM Post AS P2 WHERE P2.id = i.parent_id) ||
-            ((row_number() OVER ()) + (SELECT * FROM k))::INT, insertion_index
+            ((row_number() OVER ()) + (SELECT * FROM k))::INT,
+            insertion_index, created_at_str
         FROM i
         RETURNING id, insertion_index
       )
@@ -120,6 +125,11 @@ end
 
 
 def format_date(date)
+  date
+end
+
+
+def format_date2(date)
   p date
   date = date.sub(' ', 'T')
   floats = date[/\.\d\d\d\+/]
@@ -164,10 +174,10 @@ get '/api/post/:id/details' do
       FU.nickname AS forum_author,
       TU.nickname AS thread_author,
       T.id AS thread_id,
-      T.created_at AS thread_created,
+      T.created_at_str AS thread_created,
       T.message AS thread_message,
       P.id AS post_id,
-      P.created_at AS post_created,
+      P.created_at_str AS post_created,
       P.message AS post_message,
       U.nickname AS post_author_nickname,
       U.fullname AS post_author_fullname,

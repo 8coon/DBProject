@@ -66,4 +66,14 @@ module ForumThread
     return result[0]['row_to_json']
   end
 
+
+  def self.fm_time(time)
+    return time.strftime('%Y-%m-%dT%H:%M:%S.000') +
+        time.strftime('%z').insert(3, ':')
+  end
+
+  def self.now
+    return ForumThread.fm_time Time.now
+  end
+
 end

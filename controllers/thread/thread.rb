@@ -23,12 +23,12 @@ post '/api/forum/:slug/create' do
 
   result = query %q{
     INSERT INTO Thread
-      (user_id, created_at, forum_id, message, slug, title, votes)
+      (user_id, created_at, forum_id, message, slug, title, votes, created_at_str)
     VALUES
-      ($1, $2, $3, $4, $5, $6, 0)
+      ($1, $2, $3, $4, $5, $6, 0, $7)
     RETURNING id;
     }, [user_id, data['created'] || Time.now, forum_id, data['message'],
-        data['slug'], data['title']]
+        data['slug'], data['title'], data['created'] || ForumThread.now]
 
   status 201
   body ForumThread.info result[0]['id']
