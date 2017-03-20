@@ -6,6 +6,7 @@ require_relative 'controllers/forum/forum'
 require_relative 'controllers/user/user'
 require_relative 'controllers/thread/thread'
 require_relative 'controllers/post/post'
+require_relative 'controllers/service/service'
 
 
 after do
@@ -115,6 +116,8 @@ end
 def lot!
   p 'Love you <3'
   set :show_exceptions, false
+
+  drop
   create
 end
 

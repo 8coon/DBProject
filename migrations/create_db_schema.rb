@@ -1,6 +1,15 @@
 require_relative '../db/db'
 
 
+def drop
+  query 'DROP TABLE IF EXISTS Forum;', []
+  query 'DROP TABLE IF EXISTS Post;', []
+  query 'DROP TABLE IF EXISTS Thread;', []
+  query 'DROP TABLE IF EXISTS ThreadVote;', []
+  query 'DROP TABLE IF EXISTS ForumUser;', []
+end
+
+
 def create
 
   query %q{
@@ -32,13 +41,14 @@ def create
 
   query %q{
     CREATE TABLE IF NOT EXISTS Post (
-      id          SERIAL PRIMARY KEY,
-      thread_id   INT,
-      user_id     INT,
-      created_at  TIMESTAMPTZ,
-      is_edited   BOOLEAN,
-      message     TEXT,
-      parent_id   INT
+      id               SERIAL PRIMARY KEY,
+      thread_id        INT,
+      user_id          INT,
+      created_at       TIMESTAMPTZ,
+      is_edited        BOOLEAN,
+      message          TEXT,
+      parent_id        INT,
+      path             INT[]
     );}, []
 
   query %q{
@@ -55,10 +65,19 @@ def create
       CREATE OR REPLACE FUNCTION coon_post_insert_check() RETURNS trigger AS
       $func$
         BEGIN
-          IF ((NEW.parent_id > 0) AND
-              (SELECT count(*) FROM Post AS P WHERE P.id = NEW.parent_id) > 0) THEN
-            RAISE EXCEPTION 'No parent post exists!';
+          IF NEW.parent_id > 0 THEN
+
+            CREATE TEMPORARY TABLE parents AS
+              SELECT id FROM Post AS P WHERE P.id = NEW.parent_id LIMIT 1;
+
+            IF (SELECT count(*) = 0 FROM parents) THEN
+              RAISE EXCEPTION 'No parent post exists!';
+            END IF;
+
+            DROP TABLE parents;
+
           END IF;
+
           RETURN NEW;
         END
       $func$
@@ -107,6 +126,10 @@ def create
   query %q{
       CREATE TRIGGER coon_votes_check AFTER INSERT OR UPDATE
         ON ThreadVote FOR EACH ROW EXECUTE PROCEDURE coon_thread_votes_check();
+    }, []
+
+
+  query %q{
     }, []
 
 end

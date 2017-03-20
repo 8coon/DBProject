@@ -27,7 +27,7 @@ post '/api/forum/:slug/create' do
     VALUES
       ($1, $2, $3, $4, $5, $6, 0)
     RETURNING id;
-    }, [user_id, data['created'], forum_id, data['message'],
+    }, [user_id, data['created'] || Time.now, forum_id, data['message'],
         data['slug'], data['title']]
 
   status 201
@@ -86,6 +86,14 @@ post '/api/thread/:slug_or_id/vote' do
       ON CONFLICT(user_id) DO
         UPDATE SET voice = $3;
     }, [thread_id, user_id, voice]
+
+  body ForumThread.info thread_id
+end
+
+
+get '/api/thread/:slug_or_id/details' do
+  thread_id = ForumThread.exists? params['slug_or_id']
+  halt 404 unless thread_id
 
   body ForumThread.info thread_id
 end
