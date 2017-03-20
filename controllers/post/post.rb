@@ -86,8 +86,8 @@ post '/api/thread/:slug_or_id/create' do
           ORDER BY i.insertion_index ASC
       ) AS t2;
     }, values
-  #rescue PG::Error
-  #  halt 409
+  rescue PG::Error
+    halt 409
   end
 
   status 201
@@ -113,3 +113,6 @@ get '/api/thread/:slug_or_id/posts' do
       \}
     }
 end
+
+
+
