@@ -97,3 +97,39 @@ get '/api/thread/:slug_or_id/details' do
 
   body ForumThread.info thread_id
 end
+
+
+post '/api/thread/:slug_or_id/details' do
+  thread_id = ForumThread.exists? params['slug_or_id']
+  halt 404 unless thread_id
+
+  data = JSON.parse request.body.read
+
+  keys = []
+  args = []
+  values = []
+
+  data['id'] = nil
+  data['slug'] = nil
+  data['votes'] = nil
+
+  data.each do |key, value|
+    unless value.nil?
+      keys.push key
+      args.push '$' + (args.length + 1).to_s
+      values.push value
+    end
+  end
+
+  if values.length > 0
+    values.push thread_id
+
+    query %{
+        UPDATE Thread SET
+          (#{keys.join ','}) = (#{args.join ','})
+        WHERE (id = $#{args.length + 1});
+      }, values
+  end
+
+  body ForumThread.info thread_id
+end

@@ -47,9 +47,17 @@ module Forum
 
     result = query %{
       SELECT row_to_json(t) FROM (
-        SELECT F.slug AS slug, F.title AS title, U.nickname AS "user"
-        FROM Forum as F INNER JOIN ForumUser as U ON (U.id = F.user_id)
-        WHERE (#{param} = $1))
+        SELECT
+          F.slug AS slug,
+          F.title AS title,
+          U.nickname AS "user",
+          F.posts AS posts,
+          F.threads AS threads
+        FROM
+          Forum as F
+          INNER JOIN ForumUser as U ON (U.id = F.user_id)
+        WHERE
+          (#{param} = $1))
         AS t;
       }, [slug_or_id.to_s.downcase]
 

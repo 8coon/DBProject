@@ -53,8 +53,7 @@ module Post
           FROM
             Post AS P
             INNER JOIN ForumUser AS U ON (U.id = P.user_id)
-            INNER JOIN Thread AS T ON (T.id = P.thread_id)
-            INNER JOIN Forum AS F ON (F.id = T.forum_id)
+            INNER JOIN Forum AS F ON (F.id = P.forum_id)
           WHERE
             P.thread_id = $1
           ORDER BY
@@ -101,8 +100,7 @@ module Post
           FROM
             Post AS P
             INNER JOIN ForumUser AS U ON (U.id = P.user_id)
-            INNER JOIN Thread AS T ON (T.id = P.thread_id)
-            INNER JOIN Forum AS F ON (F.id = T.forum_id)
+            INNER JOIN Forum AS F ON (F.id = P.forum_id)
           WHERE
             P.path[1] IN (SELECT id FROM i)
           ORDER BY
