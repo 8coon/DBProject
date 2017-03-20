@@ -47,7 +47,7 @@ post '/api/thread/:slug_or_id/create' do
         SELECT
           *
         FROM
-          (#{queries.join "\n UNION \n"}) AS i0
+          (#{queries.join "\n UNION ALL \n"}) AS i0
       ), j AS (
         INSERT INTO Post AS P
           (thread_id, user_id, created_at, is_edited, message, parent_id)

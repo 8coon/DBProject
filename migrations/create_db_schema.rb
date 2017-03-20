@@ -19,14 +19,15 @@ def create
       forum_id    INT,
       message     TEXT,
       slug        TEXT,
-      title       TEXT
+      title       TEXT,
+      votes       INT
     );}, []
 
   query %q{
     CREATE TABLE IF NOT EXISTS ThreadVote (
       thread_id INT,
-      user_id   INT,
-      vote      INT
+      user_id   INT UNIQUE,
+      voice     SMALLINT
     );}, []
 
   query %q{
@@ -71,6 +72,41 @@ def create
   query %q{
       CREATE TRIGGER coon_post_check BEFORE INSERT
         ON Post FOR EACH ROW EXECUTE PROCEDURE coon_post_insert_check();
+    }, []
+
+
+  query %q{
+      CREATE OR REPLACE FUNCTION coon_thread_votes_check() RETURNS trigger AS
+      $func$
+        BEGIN
+
+          IF TG_OP = 'INSERT' THEN
+            UPDATE Thread SET
+              votes = votes + NEW.voice
+            WHERE NEW.thread_id = id;
+            RETURN NULL;
+          END IF;
+
+          IF OLD.voice = NEW.voice THEN
+            RETURN NULL;
+          END IF;
+
+          UPDATE Thread SET
+            votes = votes + CASE WHEN NEW.voice = -1 THEN -2 ELSE 2 END
+          WHERE NEW.thread_id = id;
+          RETURN NULL;
+        END
+      $func$
+      LANGUAGE plpgsql;
+    }, []
+
+  query %q{
+      DROP TRIGGER IF EXISTS coon_votes_check ON ThreadVote;
+    }, []
+
+  query %q{
+      CREATE TRIGGER coon_votes_check AFTER INSERT OR UPDATE
+        ON ThreadVote FOR EACH ROW EXECUTE PROCEDURE coon_thread_votes_check();
     }, []
 
 end

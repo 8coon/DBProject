@@ -41,7 +41,8 @@ module ForumThread
           T.id AS id,
           T.message AS message,
           T.title AS title,
-          T.slug AS slug
+          T.slug AS slug,
+          T.votes AS votes
         FROM
           Thread AS T
           INNER JOIN ForumUser AS U ON (T.user_id = U.id)

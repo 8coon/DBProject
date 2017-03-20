@@ -23,9 +23,9 @@ post '/api/forum/:slug/create' do
 
   result = query %q{
     INSERT INTO Thread
-      (user_id, created_at, forum_id, message, slug, title)
+      (user_id, created_at, forum_id, message, slug, title, votes)
     VALUES
-      ($1, $2, $3, $4, $5, $6)
+      ($1, $2, $3, $4, $5, $6, 0)
     RETURNING id;
     }, [user_id, data['created'], forum_id, data['message'],
         data['slug'], data['title']]
@@ -64,4 +64,28 @@ get '/api/forum/:slug/threads' do
   end
 
   body threads[0]['array_to_json']
+end
+
+
+post '/api/thread/:slug_or_id/vote' do
+  data = JSON.parse request.body.read
+  voice = -1
+  voice = 1 if data['voice'].to_s == '1'
+
+  user_id = User.exists? data['nickname']
+  halt 404 unless user_id
+
+  thread_id = ForumThread.exists? params['slug_or_id']
+  halt 404 unless thread_id
+
+  query %q{
+      INSERT INTO ThreadVote
+        (thread_id, user_id, voice)
+      VALUES
+        ($1, $2, $3)
+      ON CONFLICT(user_id) DO
+        UPDATE SET voice = $3;
+    }, [thread_id, user_id, voice]
+
+  body ForumThread.info thread_id
 end
