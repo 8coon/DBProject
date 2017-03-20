@@ -9,6 +9,11 @@ post '/api/service/clear' do
 end
 
 
+get '/api/service/query_stats' do
+  body time_stats.join "\n"
+end
+
+
 get '/api/service/status' do
   result = query %q{
       SELECT
