@@ -45,8 +45,7 @@ post '/api/thread/:slug_or_id/create' do
                    post_data['parent'] || 0,
                    post_data['isEdited'],
                    queries.length,
-                   ForumThread.fm_time(Time.parse(
-                       post_data['created'] || ForumThread.now))
+                   ForumThread.fm_time(Time.parse(created))
                   ]
   end
 
