@@ -15,6 +15,8 @@ post '/api/thread/:slug_or_id/create' do
   queries = []
   values = []
 
+  created = (data[0] || {})['created'] || ForumThread.now
+
   data.each do |post_data|
     i = values.length
 
@@ -38,8 +40,7 @@ post '/api/thread/:slug_or_id/create' do
 
     values.concat [thread_id.to_i,
                    post_data['author'],
-                   ForumThread.fm_time(Time.parse(
-                       post_data['created'] || ForumThread.now)),
+                   ForumThread.fm_time(Time.parse(created)),
                    post_data['message'],
                    post_data['parent'] || 0,
                    post_data['isEdited'],
