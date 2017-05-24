@@ -3,11 +3,13 @@ FROM ubuntu:16.04
 MAINTAINER Serge Peshkoff
 ENV TZ "Europe/Moscow"
 
+#docker run -p 5000:5000 --rm s.peshkov
 
-RUN apt-get -y update
+
+RUN apt-get update -y
 
 ENV PGVER 9.5
-RUN apt-get install -y postgresql-$PGVER
+RUN apt-get install -y postgresql-$PGVER && apt-get clean all
 
 USER postgres
 
@@ -24,15 +26,16 @@ VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 USER root
 
 
-RUN apt-get install -y ruby
-RUN apt-get install -y ruby-bundler
-RUN apt-get install -y ruby-dev
+RUN apt-get install -y ruby && apt-get clean all
+RUN apt-get install -y ruby-bundler && apt-get clean all
+RUN apt-get install -y ruby-dev && apt-get clean all
 
-RUN apt-get install -y build-essential bison openssl libreadline6
-RUN apt-get install -y libreadline6-dev curl git-core zlib1g zlib1g-dev
-RUN apt-get install -y libssl-dev libyaml-dev libxml2-dev autoconf libc6-dev
-RUN apt-get install -y ncurses-dev automake libtool libgmp-dev libgmp3-dev
-RUN apt-get install -y libpq-dev
+RUN apt-get install -y build-essential bison openssl libreadline6 && apt-get clean all
+RUN apt-get install -y libreadline6-dev curl git-core zlib1g zlib1g-dev && apt-get clean all
+RUN apt-get install -y libssl-dev libyaml-dev libxml2-dev autoconf libc6-dev && apt-get clean all
+RUN apt-get install -y ncurses-dev automake libtool libgmp-dev libgmp3-dev && apt-get clean all
+RUN apt-get install -y libpq-dev && apt-get clean all
+RUN apt-get install -y nginx && apt-get clean all
 
 
 ENV APP_HOME /usr/app
@@ -46,11 +49,11 @@ RUN /bin/bash -c -l -s "bundle install"
 
 ADD . $APP_HOME
 
+
 ENV DB "postgresql://docker:docker@localhost/docker"
-ENV PORT 5000
 EXPOSE 5000
 
-CMD ["/bin/bash", "-l", "-c", "service postgresql start && ruby main.rb"]
+CMD ["/bin/bash", "-l", "-c", "ruby start.rb"]
 
 
 

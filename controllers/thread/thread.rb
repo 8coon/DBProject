@@ -78,16 +78,82 @@ post '/api/thread/:slug_or_id/vote' do
   thread_id = ForumThread.exists? params['slug_or_id']
   halt 404 unless thread_id
 
-  query %q{
-      INSERT INTO ThreadVote
-        (thread_id, user_id, voice)
-      VALUES
-        ($1, $2, $3)
-      ON CONFLICT(user_id) DO
-        UPDATE SET voice = $3;
-    }, [thread_id, user_id, voice]
 
-  body ForumThread.info thread_id
+  transaction do |conn|
+    result = conn.query %q{
+        SELECT
+          voice
+        FROM
+          ThreadVote
+        WHERE
+          user_id = $1 AND thread_id = $2;
+      }, [user_id, thread_id]
+
+    voice_mod = voice
+
+    if result.ntuples != 0
+      voice_mod = voice - result[0]['voice'].to_i
+
+      conn.query %q{
+          UPDATE
+            ThreadVote
+          SET
+            voice = $3
+          WHERE
+            thread_id = $1 AND user_id = $2;
+        }, [thread_id, user_id, voice]
+    else
+      conn.query %q{
+          INSERT INTO ThreadVote
+            (thread_id, user_id, voice)
+          VALUES
+            ($1, $2, $3);
+        }, [thread_id, user_id, voice]
+    end
+
+
+    result = conn.query %q{
+      SELECT row_to_json(t) FROM (
+        SELECT
+          U.nickname AS author,
+          T.created_at AS created,
+          F.slug AS forum,
+          T.id AS id,
+          T.message AS message,
+          T.title AS title,
+          T.slug AS slug,
+          T.votes AS votes,
+          F.id AS forum_id
+        FROM
+          Thread AS T
+          INNER JOIN ForumUser AS U ON (T.user_id = U.id)
+          INNER JOIN Forum AS F ON (T.forum_id = F.id)
+        WHERE
+          T.id = $1
+      ) AS t;
+      }, [thread_id]
+
+    result = JSON.parse result[0]['row_to_json']
+
+    user = conn.query %q{
+        SELECT user_id FROM ForumMember WHERE forum_id = $1;
+      }, [result['forum_id']]
+
+    if user.ntuples == 0
+      conn.query %q{
+        INSERT INTO ForumMember
+          (forum_id, user_id)
+        VALUES
+          ($1, $2)
+      }, [result['forum_id'], user_id]
+    end
+
+    conn.query 'UPDATE Thread SET votes = votes + $2 WHERE id = $1;',
+               [thread_id, voice_mod]
+
+    result['votes'] = result['votes'].to_i + voice_mod
+    body(JSON.pretty_generate result)
+  end
 end
 
 

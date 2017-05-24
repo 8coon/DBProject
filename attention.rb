@@ -107,6 +107,9 @@ end
 
 def choose(what, from: '')
   set :server, from
+  set :lock, true
+  set :environment, :production
+  set :logging, false
 end
 
 def thank(who)
@@ -117,7 +120,7 @@ def lot!
   p 'Love you <3'
   set :show_exceptions, false
 
-  drop
-  create
+  # drop
+  # create
 end
 

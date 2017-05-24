@@ -31,6 +31,45 @@ def query(sql, params = nil)
 end
 
 
+class Conn
+  def initialize(conn)
+    $conn = conn
+  end
+
+  def paste_params(sql, params)
+    return sql if params.nil?
+    sql.gsub(/\$\d/) { |capture| params[capture.slice(1).to_i - 1] }
+  end
+
+  def query(sql, params = nil)
+    sql = sql.gsub(/\s+/, ' ').strip
+
+    start = Time.now
+    # result = $conn.exec sql, params
+
+    sql = paste_params sql, params
+    result = $conn.query sql
+
+    stop = Time.now
+
+    if $__statements__[sql]
+      $__statements__[sql] = (time_diff(start, stop) + $__statements__[sql]) / 2
+    else
+      $__statements__[sql] = time_diff start, stop
+    end
+
+    result
+  end
+end
+
+
+def transaction
+  $__conn__.transaction do |x|
+    yield Conn.new x
+  end
+end
+
+
 def time_stats
   sorted = $__statements__.sort_by {|_key, value| value}
   stats = []

@@ -222,6 +222,8 @@ get '/api/post/:id/details' do
       thread:   result['thread_id'].to_i,
   }
 
+  p post
+
   thread = {
       author:   result['thread_author'],
       created:  format_date(result['thread_created']),
@@ -281,7 +283,7 @@ post '/api/post/:id/details' do
         P.created_at AS created,
         F.slug AS forum,
         P.id AS id,
-        P.is_edited AS isEdited,
+        P.is_edited AS "isEdited",
         P.message AS message,
         P.parent_id AS parent,
         P.thread_id AS thread

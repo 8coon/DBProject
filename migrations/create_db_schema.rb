@@ -54,7 +54,7 @@ def create
   query %q{
     CREATE TABLE IF NOT EXISTS ThreadVote (
       thread_id INT,
-      user_id   INT UNIQUE,
+      user_id   INT,
       voice     SMALLINT
     );}, []
 
@@ -215,14 +215,14 @@ def create
       LANGUAGE plpgsql;
     }, []
 
-  query %q{
-      DROP TRIGGER IF EXISTS coon_votes_check ON ThreadVote;
-    }, []
+  #query %q{
+  #    DROP TRIGGER IF EXISTS coon_votes_check ON ThreadVote;
+  #  }, []
 
-  query %q{
-      CREATE TRIGGER coon_votes_check AFTER INSERT OR UPDATE
-        ON ThreadVote FOR EACH ROW EXECUTE PROCEDURE coon_thread_votes_check();
-    }, []
+  #query %q{
+  #    CREATE TRIGGER coon_votes_check AFTER INSERT OR UPDATE
+  #      ON ThreadVote FOR EACH ROW EXECUTE PROCEDURE coon_thread_votes_check();
+  #  }, []
 
 
   query %q{
