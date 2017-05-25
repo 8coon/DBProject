@@ -25,6 +25,30 @@ module ForumThread
     return result[0]['id']
   end
 
+  def self.exists_with_forum(slug_or_id)
+    return false if slug_or_id.nil?
+
+    param = 'T.id'
+    param = 'lower(T.slug)' if Forum.slug? slug_or_id
+
+    result = query %{
+      SELECT
+        T.id AS id,
+        F.slug AS forum
+      FROM
+        Thread AS T
+        JOIN Forum AS F ON (F.id = forum_id)
+      WHERE
+        (#{param} = $1) LIMIT 1;
+      }, [slug_or_id.to_s.downcase]
+
+    return false if result.ntuples == 0
+    return {
+        id: result[0]['id'].to_i,
+        forum: result[0]['forum'],
+    }
+  end
+
 
   def self.threads(where, where_args, order_by = nil, array = nil, limit = nil)
     order_by = "ORDER BY #{order_by}" if order_by

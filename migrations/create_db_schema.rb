@@ -131,8 +131,13 @@ def create
               RAISE EXCEPTION 'No parent post exists!';
             END IF;
 
-            DROP TABLE parents;
+            NEW.path = (SELECT P2.path FROM Post AS P2 WHERE P2.id
+                  = NEW.parent_id)
+              || NEW.id;
 
+            DROP TABLE parents;
+          ELSE
+            NEW.path = array[]::INT[] || NEW.id;
           END IF;
 
           NEW.forum_id = (SELECT forum_id FROM Thread WHERE id = NEW.thread_id);

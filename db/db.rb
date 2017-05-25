@@ -31,6 +31,16 @@ def query(sql, params = nil)
 end
 
 
+def query_unprepared(sql)
+  $__conn__.query sql
+end
+
+
+def quote(val)
+  $__conn__.escape_string val
+end
+
+
 class Conn
   def initialize(conn)
     $conn = conn

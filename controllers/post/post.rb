@@ -9,15 +9,77 @@ require_relative '../../utils/post'
 
 post '/api/thread/:slug_or_id/create' do
   data = JSON.parse request.body.read
-  thread_id = ForumThread.exists? params['slug_or_id']
-  halt 404 unless thread_id
 
-  queries = []
-  values = []
+  thread_info = ForumThread.exists_with_forum params['slug_or_id']
+  halt 404 unless thread_info
+
+  thread_id = thread_info[:id]
+  forum_name = thread_info[:forum]
 
   created = (data[0] || {})['created'] || ForumThread.now
+  queries = []
 
   data.each do |post_data|
+    post_data['created'] = ForumThread.fm_time(Time.parse(created))
+
+    user_id = User.exists? post_data['author']
+    halt 404 unless user_id
+
+    #path = 'array[]::INT[]'
+    #path_after = "|| (SELECT currval('post_id_seq')::INT)"
+    #parent = post_data['parent'].to_i
+
+    #unless parent
+    #  parent = 0
+    #end
+
+    #if parent != 0
+    #  path = "(SELECT P2.path FROM Post AS P2 WHERE
+    #      P2.id = #{parent})"
+    #end
+
+    queries.push %{
+          (
+            #{thread_id},
+            #{user_id},
+            '#{post_data['created']}',
+            #{post_data['isEdited'].to_s.downcase == 'true'},
+            '#{post_data['message']}',
+            #{post_data['parent'] || 0},
+            '#{post_data['created']}'
+          )
+      }
+  end
+
+  insert_query = %{
+      INSERT INTO Post AS P (
+          thread_id, user_id, created_at, is_edited, message, parent_id,
+          created_at_str
+      ) VALUES #{queries.join(', ')}
+      RETURNING
+        id
+      ;}
+
+  begin
+    ids = query_unprepared insert_query
+
+    halt 404 if ids.ntuples != data.length
+
+    data.each_with_index do |post_data, index|
+      post_data['id'] = ids[index]['id'].to_i
+      post_data['thread'] = thread_id.to_i
+      post_data['forum'] = forum_name
+    end
+  rescue PG::Error
+    halt 409
+  end
+
+  status 201
+  body(JSON.pretty_generate data)
+  return
+
+
+  %q{data.each do |post_data|
     i = values.length
 
     # (thread_id, user_id, created_at, is_edited, message, parent_id)
@@ -95,12 +157,12 @@ post '/api/thread/:slug_or_id/create' do
     }, values
   rescue PG::Error
     halt 409
-  end
+  end}
 
-  halt 404 if result.ntuples == 0 || result[0]['array_to_json'].nil?
+  #halt 404 if result.ntuples == 0 || result[0]['array_to_json'].nil?
 
-  status 201
-  body result[0]['array_to_json']
+  #status 201
+  #body result[0]['array_to_json']
 end
 
 
