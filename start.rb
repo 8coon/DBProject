@@ -27,6 +27,7 @@ end
 File.open '/etc/nginx/sites-available/default', 'w' do |file|
   contents = %{
     upstream rubies {
+        least_conn;
         #{worker_list.join ";\n"};
     }
 

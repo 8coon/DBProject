@@ -110,6 +110,14 @@ def choose(what, from: '')
   set :lock, true
   set :environment, :production
   set :logging, false
+
+  before do
+    GC.disable
+  end
+
+  after do
+    GC.enable
+  end
 end
 
 def thank(who)

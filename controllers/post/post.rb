@@ -25,19 +25,6 @@ post '/api/thread/:slug_or_id/create' do
     user_id = User.exists? post_data['author']
     halt 404 unless user_id
 
-    #path = 'array[]::INT[]'
-    #path_after = "|| (SELECT currval('post_id_seq')::INT)"
-    #parent = post_data['parent'].to_i
-
-    #unless parent
-    #  parent = 0
-    #end
-
-    #if parent != 0
-    #  path = "(SELECT P2.path FROM Post AS P2 WHERE
-    #      P2.id = #{parent})"
-    #end
-
     queries.push %{
           (
             #{thread_id},
@@ -76,93 +63,6 @@ post '/api/thread/:slug_or_id/create' do
 
   status 201
   body(JSON.pretty_generate data)
-  return
-
-
-  %q{data.each do |post_data|
-    i = values.length
-
-    # (thread_id, user_id, created_at, is_edited, message, parent_id)
-
-    queries.push "
-      SELECT
-        $#{i+1}::INT          as thread_id,
-        U.id::INT             as user_id,
-        $#{i+3}::TIMESTAMPTZ(3)  as created_at,
-        $#{i+8}::TEXT         as created_at_str,
-        $#{i+6}::BOOLEAN      as is_edited,
-        $#{i+4}::TEXT         as message,
-        $#{i+5}::INT          as parent_id,
-        $#{i+7}::INT          as insertion_index
-      FROM
-        ForumUser AS U
-      WHERE
-        (lower(U.nickname) = lower($#{i+2}::TEXT))
-      "
-
-    values.concat [thread_id.to_i,
-                   post_data['author'],
-                   ForumThread.fm_time(Time.parse(created)),
-                   post_data['message'],
-                   post_data['parent'] || 0,
-                   post_data['isEdited'],
-                   queries.length,
-                   ForumThread.fm_time(Time.parse(created))
-                  ]
-  end
-
-  begin
-    result = query %{
-      WITH i AS (
-        SELECT
-          *
-        FROM
-          (#{queries.join "\n UNION ALL \n"}) AS i0
-        ORDER BY insertion_index ASC
-      ), k AS (
-        SELECT coalesce(max(id), 0) FROM Post
-      ), j AS (
-        INSERT INTO Post AS P
-          (thread_id, user_id, created_at, is_edited, message, parent_id,
-           path, insertion_index, created_at_str)
-        SELECT
-          thread_id, user_id, created_at, is_edited, message, parent_id,
-            (SELECT P2.path FROM Post AS P2 WHERE P2.id = i.parent_id) ||
-            ((row_number() OVER ()) + (SELECT * FROM k))::INT,
-            insertion_index, created_at_str
-        FROM i
-        RETURNING id, insertion_index
-      )
-
-      SELECT
-        array_to_json(array_agg(t2))
-      FROM (
-          SELECT
-            U.nickname AS author,
-            i.created_at AS created,
-            F.slug AS forum,
-            j.id AS id,
-            i.is_edited AS isEdited,
-            i.message AS message,
-            i.parent_id AS parent,
-            i.thread_id AS thread
-          FROM
-            i
-            INNER JOIN ForumUser AS U ON (U.id = i.user_id)
-            INNER JOIN Thread AS T ON (T.id = i.thread_id)
-            INNER JOIN Forum AS F ON (F.id = T.forum_id)
-            INNER JOIN j ON (j.insertion_index = i.insertion_index)
-          ORDER BY i.insertion_index ASC
-      ) AS t2;
-    }, values
-  rescue PG::Error
-    halt 409
-  end}
-
-  #halt 404 if result.ntuples == 0 || result[0]['array_to_json'].nil?
-
-  #status 201
-  #body result[0]['array_to_json']
 end
 
 
